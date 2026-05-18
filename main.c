@@ -12,7 +12,10 @@
 #include "intercontroller.h"
 
 int main(){
-
+    processos();
+    while (1) {
+        sleep(1);
+    }
     return 0;
     
 }

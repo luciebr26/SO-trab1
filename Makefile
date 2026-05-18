@@ -1,30 +1,17 @@
 CC = gcc
+CFLAGS = -Wall -Wextra
 
-CFLAGS = -Wall -Wextra -g
-
-SRC = src/main.c \
-      src/kernel.c \
-      src/intercontroller.c \
-      src/app.c
-
-OBJ = $(SRC:.c=.o)
-
-TARGET = kernel_sim
-
-INCLUDES = -Iinclude
+TARGET = program
+SRCS = main.c app.c intercontroller.c kernel.c
+OBJS = $(SRCS:.c=.o)
 
 all: $(TARGET)
 
-$(TARGET): $(OBJ)
-	$(CC) $(CFLAGS) $(OBJ) -o $(TARGET)
+$(TARGET): $(OBJS)
+	$(CC) $(OBJS) -o $(TARGET)
 
-src/%.o: src/%.c
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJ) $(TARGET)
-
-run: all
-	./$(TARGET)
-
-re: clean all
+	rm -f $(OBJS) $(TARGET)

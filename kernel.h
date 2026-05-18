@@ -14,12 +14,6 @@ typedef enum {
     FINISHED
 } State;
 
-typedef struct {
-    pid_t pid;
-    int pc;
-    State State;
-} PCB;
-
 void contHandler(int signal);
 void stopHandler(int signal);
 void IRQ0Handler(int signal);

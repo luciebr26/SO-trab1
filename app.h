@@ -6,5 +6,23 @@ serão executadas cada syscall(D1, R ou W).
 
 -syscall
 */
+#ifndef APP_H
+#define APP_H
 
-#define MAX 10000
+
+#include "kernel.h"
+
+#define MAX 10
+#define N 6
+
+typedef struct {
+
+    pid_t pid;
+    int pc;
+    State state;
+        
+} Processo;
+
+void processos();
+
+#endif
