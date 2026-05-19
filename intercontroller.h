@@ -5,6 +5,15 @@ corpo do loop)
 - Um IRQ1 a cada 3s após o pedido de I/O de cada processo indicando o final da operação
 de I/O
 */
-#include "kernel.h"
+//#include "kernel.h"
 #include "app.h"
-//void intercontroller();
+#include <sys/types.h>
+
+#ifndef INTERRUPT_CONTROLLER_H
+#define INTERRUPT_CONTROLLER_H
+
+void intercontroller(pid_t kernel_pid);
+
+void io_timer(pid_t kernel_pid);
+
+#endif
