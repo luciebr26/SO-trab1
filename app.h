@@ -20,6 +20,7 @@ typedef struct {
     pid_t pid;
     int pc;
     State state;
+    char syscall; // 'D' para D1, 'R' para R, 'W' para W
         
 } Processo;
 
