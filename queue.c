@@ -1,15 +1,5 @@
 // C Program to demonstrate how to Implement a queue
-#include <stdbool.h>
-#include <stdio.h>
-#define MAX_SIZE 100
-
-// Defining the Queue structure
-typedef struct
-{
-    int items[MAX_SIZE];
-    int front;
-    int rear;
-} Queue;
+#include "queue.h"
 
 // Function to initialize the queue
 void initializeQueue(Queue *q)
@@ -83,32 +73,4 @@ void printQueue(Queue *q)
         printf("%d ", q->items[i]);
     }
     printf("\n");
-}
-
-int main()
-{
-    Queue q;
-    initializeQueue(&q);
-
-    // Enqueue elements
-    enqueue(&q, 10);
-    printQueue(&q);
-
-    enqueue(&q, 20);
-    printQueue(&q);
-
-    enqueue(&q, 30);
-    printQueue(&q);
-
-    // Peek front element
-    printf("Front element: %d\n", peek(&q));
-
-    // Dequeue an element
-    dequeue(&q);
-    printQueue(&q);
-
-    // Peek front element after dequeue
-    printf("Front element after dequeue: %d\n", peek(&q));
-
-    return 0;
 }
