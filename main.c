@@ -15,8 +15,9 @@ int main(){
     printf("Inicializando o kernel\n");
     init_kernel();
 
-    //signal(SIGUSR1, syscallHandler);
+
     printf("Registrando handlers de IRQ\n");
+    signal(SIGUSR1, syscallHandler);
     signal(SIGALRM, IRQ0Handler);
     signal(SIGUSR2, IRQ1Handler);
 

@@ -26,7 +26,6 @@ void IRQ0Handler(int signal){
         kill(a[current_process].pid, SIGSTOP); // Block the currently running process
         a[current_process].state = READY;
     }
-    printf("IRQ0 received, blocking process %d\n", current_process);
 
     //O Kernel escolhe outro processo de aplicação e o ativa usando o sinal SIGCONT, contanto que este processo não esteja esperando pelo término de um syscall para o dispositivo de I/O, D1.
     int next_process = (current_process + 1) % NPROC;
@@ -43,7 +42,7 @@ void IRQ0Handler(int signal){
     current_process = next_process;
     a[current_process].state = RUNNING;
     kill(a[current_process].pid, SIGCONT); // Activate the next process
-    printf("Process %d is now running\n", current_process);
+    printf("Process %d is now running\n", current_process +1);
 
 }
 
@@ -64,9 +63,15 @@ void IRQ1Handler(int signal){
         printf("Nao tem processos esperando para I/O.\n");
     }
 }
-/*
-void syscallHandler(int signal){
 
+void syscallHandler(int signal){
+    printf("Syscall received from process %d\n", current_process);
+
+    // Block the current process and add it to the wait queue
+    a[current_process].state = BLOCKED;
+    enqueue(&wait_queue, current_process);
+    kill(a[current_process].pid, SIGSTOP); 
+
+    IRQ0Handler(0);
 }
 
-*/

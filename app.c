@@ -24,16 +24,33 @@ void processos(){
                 sleep(1);
                 printf("A%d, PID=%d, PC=%d\n", i + 1, getpid(), pc);
 
-                if (pc == 4 || pc == 10 || pc == 15) {
-
-                    printf("A%d requesting I/O at PC=%d\n", i + 1, pc);
-                    /* to complete syscall */
+                if (pc == 4 ) {
+                    a[i].syscall = 'D'; // D1 syscall
 
                     // notify kernel
                     kill(getppid(), SIGUSR1);
 
                     // block process
                     raise(SIGSTOP); 
+                }
+
+                if (pc == 10) {
+                    a[i].syscall = 'R'; // Read syscall
+                    // notify kernel
+                    kill(getppid(), SIGUSR1);
+
+                    // block process
+                    raise(SIGSTOP); 
+                }
+
+                if (pc == 15) {
+                    a[i].syscall = 'W'; // Write syscall
+                    // notify kernel
+                    kill(getppid(), SIGUSR1);
+
+                    // block process
+                    raise(SIGSTOP); 
+
                 }
 
             }

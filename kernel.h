@@ -31,11 +31,14 @@ typedef struct {
 } Processo;
 
 extern Processo a[NPROC];
+extern Queue wait_queue;
+extern int current_process;
 
 void init_kernel();
 
 //void syscallHandler(int signal); 
 void IRQ0Handler(int signal); 
 void IRQ1Handler(int signal);
+void syscallHandler(int signal);
 
 #endif 
