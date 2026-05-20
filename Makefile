@@ -1,8 +1,8 @@
 CC = gcc
 CFLAGS = -Wall -Wextra
 
-TARGET = program
-SRCS = main.c app.c intercontroller.c kernel.c
+TARGET = main
+SRCS = main.c app.c intercontroller.c kernel.c queue.c
 OBJS = $(SRCS:.c=.o)
 
 all: $(TARGET)

@@ -9,20 +9,9 @@ serão executadas cada syscall(D1, R ou W).
 #ifndef APP_H
 #define APP_H
 
-
 #include "kernel.h"
 
 #define MAX 10
-#define N 6
-
-typedef struct {
-
-    pid_t pid;
-    int pc;
-    State state;
-    char syscall; // 'D' para D1, 'R' para R, 'W' para W
-        
-} Processo;
 
 void processos();
 

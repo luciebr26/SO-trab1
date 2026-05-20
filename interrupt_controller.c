@@ -18,7 +18,7 @@
 // ∙ An IRQ0 every 1 second indicates the end of the process timeslice (use sleep() inside the loop body).
 // ∙ An IRQ1 is triggered every 3 seconds after each process's I/O request, indicating the end of the I/O operation.
 
-
+/*
 
  #include <signal.h>
  #include <stdio.h>
@@ -56,3 +56,4 @@
 
 
 
+*/
