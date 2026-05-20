@@ -6,8 +6,6 @@
 
 #include "app.h"
 
-#define MAX_ITERATIONS 20
-
 void processos(){
 
     for (int i=0; i<NPROC; i++){

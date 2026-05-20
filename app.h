@@ -11,7 +11,7 @@ serão executadas cada syscall(D1, R ou W).
 
 #include "kernel.h"
 
-#define MAX 10
+#define MAX 30
 
 void processos();
 
