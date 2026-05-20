@@ -21,6 +21,15 @@ int main(){
     signal(SIGALRM, IRQ0Handler);
     signal(SIGUSR2, IRQ1Handler);
 
+    //start interrupt controller
+    pid_t interrupt_pid = fork();
+
+    if (interrupt_pid == 0) {
+
+        intercontroller(getppid());
+        exit(0);
+    }
+
     printf("Criando processos de aplicação\n");
     processos();
 

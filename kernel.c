@@ -1,4 +1,5 @@
 #include "kernel.h"
+#include "intercontroller.h"
 
 Processo a[NPROC];
 Queue wait_queue;
@@ -71,6 +72,9 @@ void syscallHandler(int signal){
     a[current_process].state = BLOCKED;
     enqueue(&wait_queue, current_process);
     kill(a[current_process].pid, SIGSTOP); 
+
+    //start device timer
+    io_timer(getpid());
 
     IRQ0Handler(0);
 }

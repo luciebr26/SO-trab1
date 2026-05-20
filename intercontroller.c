@@ -5,16 +5,17 @@
 #include <unistd.h>
 #include <signal.h>
 
-pid_t kernel_pid; 
-
 void intercontroller(pid_t kernel_pid){
     while(1){
         sleep(1);
 
         //IRQ 0
-        printf("Interrupt Controller IRQ 0");
+        printf("[Interrupt Controller]-IRQ0\n");
 
-        kill(kernel_pid, SIGALRM);
+        //error check for kill
+        if(kill(kernel_pid, SIGALRM) == -1 ){
+            perror("kill failed\n");
+        }
     }
 }
 
@@ -25,7 +26,7 @@ void io_timer(pid_t kernel_pid){
     if(pid < 0){
         //ERROR in creating child process 
 
-        printf("Error in creating child process");
+        printf("Error in creating child process\n");
 
         //exit faliure
         exit(1);
@@ -36,12 +37,14 @@ void io_timer(pid_t kernel_pid){
         //inside the child process
         sleep(3);
 
-        printf("Interrupt Controller IRQ1");
-
-        kill(kernel_pid, SIGUSR2);
+        printf("[Interrupt Controller]-IRQ1\n");
+        
+        //error check 
+        if(kill(kernel_pid, SIGUSR2) == -1){
+            perror("Kill failed");
+        }
 
         //exit success
         exit(0);
     }
-
 }
