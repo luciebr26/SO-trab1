@@ -173,7 +173,6 @@ void sigchld_handler(int signum) {
 
     while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
         if (WIFEXITED(status) || WIFSIGNALED(status)) {
-            // On cherche quel processus s'est terminé
             for (int i = 0; i < NPROC; i++) {
                 if (a[i].pid == pid) {
                     a[i].state = FINISHED; 

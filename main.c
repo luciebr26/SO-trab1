@@ -41,7 +41,7 @@ int main(){
     signal(SIGUSR1, syscallHandler);
     signal(SIGALRM, IRQ0Handler);
     signal(SIGUSR2, IRQ1Handler);
-
+    signal(SIGCHLD, sigchld_handler);
     //start interrupt controller
     pid_t interrupt_pid = fork();
 
@@ -60,11 +60,25 @@ int main(){
     a[0].state = RUNNING;
     kill(a[0].pid, SIGCONT);
 
-    printf("Kernel em loopo infinito, aguardando interrupções :\n");
+    int all_finished = 0;
 
-    while (1) {
+    while (!all_finished) {
         sleep(1);
+
+        all_finished = 1;
+
+        for (int i = 0; i < NPROC; i++) {
+            if (a[i].state != FINISHED) {
+                all_finished = 0;
+                break;
+            }
+        }
     }
+
+    kill(interrupt_pid, SIGKILL);
+    printf("Todos os processos de aplicação terminaram.\n");
+
+
     return 0;
     
 }
