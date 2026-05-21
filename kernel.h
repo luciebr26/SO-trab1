@@ -13,12 +13,13 @@
 #include "queue.h"
 #include "app.h"
 
-#define NPROC 6 // Number of processess
+#define NPROC 3 // Number of processess
 
 typedef enum {
     READY,
     RUNNING,
     BLOCKED,
+    FINISHED
 } State;
 
 typedef struct {
@@ -33,12 +34,16 @@ typedef struct {
 extern Processo a[NPROC];
 extern Queue wait_queue;
 extern int current_process;
+extern int pipe_syscall[2];
+extern int pipe_pc[NPROC][2];
 
 void init_kernel();
+void schedule_next();
+void print_state(void);
 
-//void syscallHandler(int signal); 
 void IRQ0Handler(int signal); 
 void IRQ1Handler(int signal);
 void syscallHandler(int signal);
+void sigchld_handler(int signum);
 
 #endif 

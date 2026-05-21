@@ -1,9 +1,60 @@
 #include "kernel.h"
 #include "intercontroller.h"
+#include <string.h>
+#include <sys/time.h>
 
 Processo a[NPROC];
 Queue wait_queue;
 int current_process = 0; // Index of the currently running process
+int pipe_syscall[2]; // Pipe for syscall communication between processes and kernel
+int pipe_pc[NPROC][2]; // Pipes for PC communication between processes and kernel
+
+static struct timeval start;
+
+void print_state(void) {
+    static int header_printed = 0;
+    struct timeval now;
+
+    // Get the time
+    gettimeofday(&now, NULL);
+    
+    // Calculate the elapsed time in seconds since init_kernel
+    int tempo = now.tv_sec - start.tv_sec;
+
+    // Get the information of the current process
+    char proc_name[10] = "-";
+    int pc = 0;
+    
+    if (current_process != -1) {
+        sprintf(proc_name, "A%d", current_process + 1);
+        pc = a[current_process].pc;
+    }
+
+    // Build the string for the Ready Queue (File of ready processes)
+    char fila_prontos[50] = "";
+    int first = 1;
+    
+    for (int i = 0; i < NPROC; i++) {
+        if (a[i].state == READY) {
+            if (!first) {
+                strcat(fila_prontos, ", ");
+            }
+            char temp[5];
+            sprintf(temp, "A%d", i + 1);
+            strcat(fila_prontos, temp);
+            first = 0;
+        }
+    }
+    
+    if (strlen(fila_prontos) == 0) {
+        strcpy(fila_prontos, "-");
+    }
+
+    // Display the formatted line
+    printf("\n------------------------------------------------------------\n");
+    printf("Tempo : %-7d | Processo : %-10s | PC : %-4d | Fila Prontos : %-15s\n", tempo, proc_name, pc, fila_prontos);
+    
+}
 
 void init_kernel(void){
     initializeQueue(&wait_queue);
@@ -15,67 +66,125 @@ void init_kernel(void){
         a[i].state = READY; 
         a[i].syscall = '\0';
     }
+    gettimeofday(&start, NULL);
     printf("Kernel initialized with %d processes.\n", NPROC);
 }
 
-void IRQ0Handler(int signal){
+void schedule_next()
+{
+    int next = (current_process + 1) % NPROC;
+    int start = next;
 
-    printf("IRQ0 received\n");
+    while(a[next].state != READY)
+    {
+        next = (next + 1) % NPROC;
 
-    //Quando chega um IRQ0, o Kernel Sim, envia um SIGSTOP para o processo que estava executando 
-    if (a[current_process].state == RUNNING) {
-        kill(a[current_process].pid, SIGSTOP); // Block the currently running process
-        a[current_process].state = READY;
-    }
-
-    //O Kernel escolhe outro processo de aplicação e o ativa usando o sinal SIGCONT, contanto que este processo não esteja esperando pelo término de um syscall para o dispositivo de I/O, D1.
-    int next_process = (current_process + 1) % NPROC;
-    int start_search = next_process;
-
-    while(a[next_process].state != READY) {
-        next_process = (next_process + 1) % NPROC;
-        if (next_process == start_search) {
-            // No ready process found
+        if(next == start)
+        {
+            current_process = -1;
             return;
         }
     }
 
-    current_process = next_process;
+    current_process = next;
     a[current_process].state = RUNNING;
-    kill(a[current_process].pid, SIGCONT); // Activate the next process
-    printf("Process %d is now running\n", current_process +1);
 
+    kill(a[current_process].pid, SIGCONT);
 }
 
-void IRQ1Handler(int signal){
+void IRQ0Handler(int signal){
+    (void)signal;
 
-    printf("IRQ1 received\n");
+    for (int i = 0; i < NPROC; i++) {
+        int dernier_pc;
 
-    /*Se dois processos A1 e A2 tiverem executado uma syscall para I/O para o
-    dispositivo, então o primeiro IRQ1 indicará o término do primeiro I/O (e irá desbloquear um dos
-    processos Ai)*/
-    if (!isEmpty(&wait_queue)) {
-        int process_index = peek(&wait_queue);
-        dequeue(&wait_queue);
-        a[process_index].state = READY; // Unblock the process
-        printf("Process %d unblocked and ready to run\n", process_index);
+        while (read(pipe_pc[i][0], &dernier_pc, sizeof(int)) > 0) {
+            a[i].pc = dernier_pc;
+        }
     }
-    else{
-        printf("Nao tem processos esperando para I/O.\n");
+
+    print_state();
+
+    if (a[current_process].state == RUNNING) {
+        kill(a[current_process].pid, SIGSTOP);
+        a[current_process].state = READY;
     }
+
+    schedule_next();
+}
+
+void IRQ1Handler(int signal)
+{
+    (void)signal;
+
+    int p = dequeue(&wait_queue);
+
+    if(p != -1)
+    {
+        a[p].state = READY;
+        printf("[Kernel] A%d READY after I/O\n", p+1);
+    }
+
+    if(current_process == -1)
+        schedule_next();
 }
 
 void syscallHandler(int signal){
-    printf("Syscall received from process %d\n", current_process);
+    (void)signal;
 
-    // Block the current process and add it to the wait queue
-    a[current_process].state = BLOCKED;
-    enqueue(&wait_queue, current_process);
-    kill(a[current_process].pid, SIGSTOP); 
+    int data[3];
 
-    //start device timer
+    read(pipe_syscall[0], data, sizeof(data));
+
+    pid_t pid = data[0];
+    int pc = data[1];
+    char syscall = data[2];
+
+    int idx = -1;
+
+    for(int i=0;i<NPROC;i++){
+
+        if(a[i].pid == pid){
+
+            idx = i;
+            break;
+        }
+    }
+
+    if(idx == -1)
+        return;
+
+    a[idx].pc = pc;
+    a[idx].syscall = syscall;
+    a[idx].state = BLOCKED;
+    enqueue(&wait_queue, idx);
+
     io_timer(getpid());
 
-    IRQ0Handler(0);
+    current_process = -1;
+
+    schedule_next();
 }
 
+void sigchld_handler(int signum) {
+    (void)signum;
+    int status;
+    pid_t pid;
+
+    while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+        if (WIFEXITED(status) || WIFSIGNALED(status)) {
+            // On cherche quel processus s'est terminé
+            for (int i = 0; i < NPROC; i++) {
+                if (a[i].pid == pid) {
+                    a[i].state = FINISHED; 
+
+                    if (current_process == i) {
+                        current_process = -1;
+                        schedule_next();
+                    }
+                    break;
+                }
+            }
+        }
+    }
+}

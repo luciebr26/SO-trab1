@@ -6,51 +6,50 @@
 
 #include "app.h"
 
-void processos(){
+extern int pipe_pc[NPROC][2];
 
-    for (int i=0; i<NPROC; i++){
+void processos(){
+    for (int i = 0; i < NPROC; i++) {
+
         pid_t pid = fork();
 
-        //Child
-        if (pid==0){
-            int pc = 0;
-            
-            a[i].pid = getpid();
-            raise(SIGSTOP); //block the process until the kernel schedules it
+        /* CHILD */
+        if (pid == 0) {
 
-            for(pc = 0; pc<= MAX; pc++){
-                sleep(1);
-                printf("A%d, PID=%d, PC=%d\n", i + 1, getpid(), pc);
+            int pc;
 
-                if (pc == 4 ) {
-                    a[i].syscall = 'D'; // D1 syscall
+            raise(SIGSTOP); // wait scheduler
 
-                    // notify kernel
+            for(pc = 0; pc <= MAX; pc++)
+            {
+                write(pipe_pc[i][1], &pc, sizeof(int));
+
+                sleep(1); 
+
+                if(pc == 2 || pc == 4 || pc == 6)
+                {
+                    char syscall_type;
+
+                    if(pc == 2) syscall_type = 'D';
+                    else if(pc == 4) syscall_type = 'R';
+                    else syscall_type = 'W';
+
+                    int data[3];
+
+                    data[0] = getpid();
+                    data[1] = pc;
+                    data[2] = syscall_type;
+
+                    write(pipe_syscall[1], data, sizeof(data));
+
+                    printf("A%d requested syscall %c\n",
+                        i + 1,
+                        syscall_type);
+
                     kill(getppid(), SIGUSR1);
 
-                    // block process
-                    raise(SIGSTOP); 
+                    raise(SIGSTOP);
                 }
-
-                if (pc == 10) {
-                    a[i].syscall = 'R'; // Read syscall
-                    // notify kernel
-                    kill(getppid(), SIGUSR1);
-
-                    // block process
-                    raise(SIGSTOP); 
-                }
-
-                if (pc == 15) {
-                    a[i].syscall = 'W'; // Write syscall
-                    // notify kernel
-                    kill(getppid(), SIGUSR1);
-
-                    // block process
-                    raise(SIGSTOP); 
-
-                }
-
             }
 
             printf("A%d finished\n", i + 1);
@@ -63,12 +62,16 @@ void processos(){
             a[i].pid = pid;
             a[i].pc = 0;
             a[i].state = READY;
+            a[i].syscall = '\0';
+            int status;
+            waitpid(pid, &status, WUNTRACED);
         }
-
+        
         //Error
         else {
             printf("Error in creating child process");
             exit(1);
         }
     }
+    
 }

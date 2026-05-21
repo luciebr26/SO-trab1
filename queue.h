@@ -22,7 +22,7 @@ bool isFull(Queue *q);
 
 void enqueue(Queue *q, int value);
 
-void dequeue(Queue *q);
+int dequeue(Queue *q);
 
 int peek(Queue *q);
 
